@@ -1,0 +1,13 @@
+{
+  "compilerOptions": {
+    "target": "ES6",              // Compile to modern JavaScript
+    "outDir": "./build/",         // Put compiled files in "build"
+    "module": "commonjs",         // Use Node.js module style
+    "strict": true,               // Enforce strict typing
+    "noUnusedLocals": true,       // No unused variables
+    "noUnusedParameters": true,   // No unused parameters
+    "noImplicitReturns": true,    // Functions must return something
+    "noFallthroughCasesInSwitch": true, // Switch cases must end properly
+    "esModuleInterop": true       // Help modules work together
+  }
+}
