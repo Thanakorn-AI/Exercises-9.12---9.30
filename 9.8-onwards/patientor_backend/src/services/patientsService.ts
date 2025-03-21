@@ -1,6 +1,6 @@
 // patientor_backend/src/services/patientsService.ts
 import patientsData from '../../data/patients';
-import { Patient, NonSensitivePatient, NewPatient, Entry } from '../types';
+import { Patient, NonSensitivePatient, NewPatient, Entry, EntryWithoutId } from '../types';
 import { v1 as uuid } from 'uuid';
 
 const patients: Patient[] = patientsData;
@@ -29,10 +29,10 @@ const addPatient = (entry: NewPatient): Patient => {
   return newPatient;
 };
 
-const addEntry = (patientId: string, entry: Entry): Entry => {
+const addEntry = (patientId: string, entry: EntryWithoutId): Entry => {
   const patient = patients.find(p => p.id === patientId);
   if (!patient) throw new Error('Patient not found');
-  const newEntry = { ...entry, id: uuid() };
+  const newEntry: Entry = { ...entry, id: uuid() } as Entry; // Cast to Entry since id is added
   patient.entries.push(newEntry);
   return newEntry;
 };
