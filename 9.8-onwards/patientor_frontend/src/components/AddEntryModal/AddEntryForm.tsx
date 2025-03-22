@@ -1,6 +1,25 @@
-// patientor_frontend/src/components/AddEntryModal/AddEntryForm.tsx
-import { useState, SyntheticEvent } from "react";
-import { TextField, Select, MenuItem, InputLabel, Grid, Button, FormControl, SelectChangeEvent } from "@mui/material";
+import { useState, SyntheticEvent, useEffect } from "react";
+import {
+  TextField,
+  Select,
+  MenuItem,
+  InputLabel,
+  Grid,
+  Button,
+  FormControl,
+  SelectChangeEvent,
+  Checkbox,
+  ListItemText,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  Chip,
+  Box,
+  Typography
+} from "@mui/material";
 import { LocalizationProvider, DatePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { Entry, Diagnosis, HealthCheckRating } from "../../types";
@@ -24,6 +43,25 @@ const AddEntryForm = ({ onCancel, onSubmit, diagnoses }: Props) => {
   const [sickLeaveStart, setSickLeaveStart] = useState<Dayjs | null>(null);
   const [sickLeaveEnd, setSickLeaveEnd] = useState<Dayjs | null>(null);
   const [healthCheckRating, setHealthCheckRating] = useState<HealthCheckRating>(HealthCheckRating.Healthy);
+  
+  // Diagnosis selection dialog state
+  const [diagnosisDialogOpen, setDiagnosisDialogOpen] = useState(false);
+  const [tempDiagnosisCodes, setTempDiagnosisCodes] = useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  // Initialize temporary diagnosis codes when the dialog opens
+  useEffect(() => {
+    if (diagnosisDialogOpen) {
+      setTempDiagnosisCodes([...diagnosisCodes]);
+    }
+  }, [diagnosisDialogOpen]);
+  
+  // Filter diagnoses based on search term
+  const filteredDiagnoses = diagnoses.filter(
+    (d) => 
+      d.code.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      d.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleSubmit = (event: SyntheticEvent) => {
     event.preventDefault();
@@ -71,6 +109,33 @@ const AddEntryForm = ({ onCancel, onSubmit, diagnoses }: Props) => {
     }
     onSubmit(entry);
   };
+  
+  // Diagnoses dialog handlers
+  const handleOpenDiagnosisDialog = () => {
+    setDiagnosisDialogOpen(true);
+  };
+  
+  const handleCloseDiagnosisDialog = () => {
+    setDiagnosisDialogOpen(false);
+    setSearchTerm("");
+  };
+  
+  const handleConfirmDiagnoses = () => {
+    setDiagnosisCodes(tempDiagnosisCodes);
+    handleCloseDiagnosisDialog();
+  };
+  
+  const handleToggleDiagnosis = (code: string) => {
+    setTempDiagnosisCodes((prev) => 
+      prev.includes(code)
+        ? prev.filter((c) => c !== code)
+        : [...prev, code]
+    );
+  };
+  
+  const handleRemoveDiagnosis = (code: string) => {
+    setDiagnosisCodes((prev) => prev.filter((c) => c !== code));
+  };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -106,18 +171,44 @@ const AddEntryForm = ({ onCancel, onSubmit, diagnoses }: Props) => {
           onChange={(e) => setSpecialist(e.target.value)}
           sx={{ mb: 2 }}
         />
-        <FormControl fullWidth sx={{ mb: 2 }}>
-          <InputLabel>Diagnosis Codes</InputLabel>
-          <Select
-            multiple
-            value={diagnosisCodes}
-            onChange={(e) => setDiagnosisCodes(e.target.value as string[])}
+        
+        {/* Enhanced Diagnosis Selection */}
+        <Box sx={{ mb: 2 }}>
+          <Typography variant="subtitle1" gutterBottom>
+            Diagnosis Codes
+          </Typography>
+          
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 1 }}>
+            {diagnosisCodes.length > 0 ? (
+              diagnosisCodes.map((code) => {
+                const diagnosis = diagnoses.find((d) => d.code === code);
+                return (
+                  <Chip
+                    key={code}
+                    label={`${code} - ${diagnosis?.name || ''}`}
+                    onDelete={() => handleRemoveDiagnosis(code)}
+                    color="primary"
+                    variant="outlined"
+                    sx={{ mb: 1 }}
+                  />
+                );
+              })
+            ) : (
+              <Typography variant="body2" color="text.secondary">
+                No diagnoses selected
+              </Typography>
+            )}
+          </Box>
+          
+          <Button 
+            variant="outlined" 
+            color="primary" 
+            onClick={handleOpenDiagnosisDialog}
+            fullWidth
           >
-            {diagnoses.map(d => (
-              <MenuItem key={d.code} value={d.code}>{d.code} - {d.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+            Select Diagnoses
+          </Button>
+        </Box>
 
         {type === "Hospital" && (
           <>
@@ -176,19 +267,74 @@ const AddEntryForm = ({ onCancel, onSubmit, diagnoses }: Props) => {
           </FormControl>
         )}
 
-        <Grid container spacing={2}>
+        <Grid container spacing={2} justifyContent="flex-end" sx={{ mt: 2 }}>
           <Grid item>
             <Button color="secondary" variant="contained" onClick={onCancel}>
               Cancel
             </Button>
           </Grid>
           <Grid item>
-            <Button type="submit" variant="contained">
+            <Button type="submit" variant="contained" color="primary">
               Add
             </Button>
           </Grid>
         </Grid>
       </form>
+      
+      {/* Diagnosis Selection Dialog */}
+      <Dialog 
+        open={diagnosisDialogOpen} 
+        onClose={handleCloseDiagnosisDialog}
+        fullWidth
+        maxWidth="sm"
+      >
+        <DialogTitle>Select Diagnoses</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Search diagnoses"
+            type="text"
+            fullWidth
+            variant="outlined"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            sx={{ mb: 2 }}
+          />
+          
+          <List sx={{ maxHeight: '300px', overflow: 'auto' }}>
+            {filteredDiagnoses.map((diagnosis) => (
+              <ListItem key={diagnosis.code} disablePadding>
+                <MenuItem 
+                  onClick={() => handleToggleDiagnosis(diagnosis.code)}
+                  sx={{ width: '100%' }}
+                >
+                  <Checkbox 
+                    checked={tempDiagnosisCodes.includes(diagnosis.code)} 
+                  />
+                  <ListItemText 
+                    primary={`${diagnosis.code} - ${diagnosis.name}`} 
+                  />
+                </MenuItem>
+              </ListItem>
+            ))}
+          </List>
+          
+          {filteredDiagnoses.length === 0 && (
+            <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 2 }}>
+              No diagnoses found matching your search
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseDiagnosisDialog} color="secondary">
+            Cancel
+          </Button>
+          <Button onClick={handleConfirmDiagnoses} color="primary" variant="contained">
+            Confirm
+          </Button>
+        </DialogActions>
+      </Dialog>
     </LocalizationProvider>
   );
 };
