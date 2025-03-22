@@ -1,5 +1,5 @@
 // patientor_frontend/src/components/EntryDetails.tsx
-import { Entry, Diagnosis } from "../types";
+import { Entry, Diagnosis, HealthCheckRating } from "../types";
 import { Typography, Box } from "@mui/material";
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import WorkIcon from '@mui/icons-material/Work';
@@ -14,6 +14,14 @@ const EntryDetails = ({ entry, diagnoses }: Props) => {
   const getDiagnosisDescription = (code: string) => {
     const diagnosis = diagnoses.find(d => d.code === code);
     return diagnosis ? `${code} - ${diagnosis.name}` : code;
+  };
+
+  // Map HealthCheckRating numbers to descriptive strings
+  const healthRatingDescriptions: { [key in HealthCheckRating]: string } = {
+    [HealthCheckRating.Healthy]: "Healthy",
+    [HealthCheckRating.LowRisk]: "Low Risk",
+    [HealthCheckRating.HighRisk]: "High Risk",
+    [HealthCheckRating.CriticalRisk]: "Critical Risk"
   };
 
   const renderEntryDetails = () => {
@@ -68,7 +76,7 @@ const EntryDetails = ({ entry, diagnoses }: Props) => {
                 ))}
               </ul>
             )}
-            <Typography>Health Rating: {entry.healthCheckRating}</Typography>
+            <Typography>Health Rating: {healthRatingDescriptions[entry.healthCheckRating]}</Typography>
             <Typography>Specialist: {entry.specialist}</Typography>
           </Box>
         );
