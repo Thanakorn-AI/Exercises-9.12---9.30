@@ -48,9 +48,9 @@ router.post('/:id/entries', (req, res) => {
     const { type } = req.body;
 
     const baseEntrySchema = z.object({
-      description: z.string(),
+      description: z.string().min(1, 'Description is required'), // Enforce non-empty
       date: z.string().refine(date => !isNaN(Date.parse(date)), { message: 'Invalid date format' }),
-      specialist: z.string(),
+      specialist: z.string().min(1, 'Specialist is required'), // Enforce non-empty
       diagnosisCodes: z.array(z.string()).optional()
     });
 
@@ -61,14 +61,14 @@ router.post('/:id/entries', (req, res) => {
           type: z.literal('Hospital'),
           discharge: z.object({
             date: z.string().refine(date => !isNaN(Date.parse(date)), { message: 'Invalid discharge date' }),
-            criteria: z.string()
+            criteria: z.string().min(1, 'Discharge criteria is required') // Enforce non-empty
           })
         });
         break;
       case 'OccupationalHealthcare':
         entrySchema = baseEntrySchema.extend({
           type: z.literal('OccupationalHealthcare'),
-          employerName: z.string(),
+          employerName: z.string().min(1, 'Employer name is required'), // Enforce non-empty
           sickLeave: z.object({
             startDate: z.string().refine(date => !isNaN(Date.parse(date)), { message: 'Invalid start date' }),
             endDate: z.string().refine(date => !isNaN(Date.parse(date)), { message: 'Invalid end date' })
